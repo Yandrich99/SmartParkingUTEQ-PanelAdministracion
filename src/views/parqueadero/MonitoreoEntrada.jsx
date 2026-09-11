@@ -135,9 +135,9 @@ const MonitoreoEntrada = () => {
         audio: false,
       })
       streamRef.current = stream
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-      }
+      // El <video> aún no existe en el DOM en este punto (solo se monta
+      // cuando camaraActiva pasa a true), así que la conexión del stream
+      // se hace en el useEffect de abajo, una vez que ya está montado.
       setCamaraActiva(true)
     } catch {
       setErrorCamara(
@@ -145,6 +145,15 @@ const MonitoreoEntrada = () => {
       )
     }
   }
+
+  // Conecta el stream de la cámara al <video> justo después de que se monta
+  // (cuando camaraActiva pasa a true), evitando que quede en negro.
+  useEffect(() => {
+    if (camaraActiva && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current
+      videoRef.current.play?.().catch(() => {})
+    }
+  }, [camaraActiva])
 
   // Aplica una nueva imagen (capturada o subida): valida y genera la vista previa
   const seleccionarImagen = useCallback((archivo) => {
